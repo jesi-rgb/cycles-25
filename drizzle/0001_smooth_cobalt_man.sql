@@ -1,0 +1,1 @@
+ALTER TABLE "habits" ADD COLUMN "timestamp" timestamp with time zone;

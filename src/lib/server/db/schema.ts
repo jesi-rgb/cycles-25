@@ -5,10 +5,10 @@ import { relations } from 'drizzle-orm';
 // Profiles Table
 export const profiles = pgTable('profiles', {
 	id: uuid('id').primaryKey(),
-	updatedAt: timestamp('updated_at', { withTimezone: true }),
+	updated_at: timestamp('updated_at', { withTimezone: true }),
 	username: text('username'),
-	fullName: text('full_name'),
-	avatarUrl: text('avatar_url'),
+	full_name: text('full_name'),
+	avatar_url: text('avatar_url'),
 	website: text('website')
 });
 
@@ -16,22 +16,23 @@ export const profiles = pgTable('profiles', {
 export const habits = pgTable('habits', {
 	id: integer('id').primaryKey(),
 	title: text('title'),
-	targetCount: integer('target_count'),
-	currentCount: integer('current_count'),
+	target_count: integer('target_count'),
+	current_count: integer('current_count'),
 	category: text('category'),
-	createdBy: uuid('created_by').references(() => profiles.id),
-	nextUpdate: text('next_update'),
+	created_by: uuid('created_by').references(() => profiles.id),
+	created_at: timestamp('timestamp', { withTimezone: true }),
+	next_update: text('next_update'),
 	cycle: text('cycle')
 });
 
 // History Table
 export const history = pgTable('history', {
 	id: integer('id').primaryKey(),
-	habitId: integer('habit_id').references(() => habits.id),
+	habit_id: integer('habit_id').references(() => habits.id),
 	completed: boolean('completed'),
-	currentCount: integer('current_count'),
-	targetCount: integer('target_count'),
-	userUuid: uuid('user_uuid').references(() => profiles.id),
+	current_count: integer('current_count'),
+	target_count: integer('target_count'),
+	user_uuid: uuid('user_uuid').references(() => profiles.id),
 	type: text('type'),
 	timestamp: timestamp('timestamp', { withTimezone: true })
 });
@@ -39,18 +40,18 @@ export const history = pgTable('history', {
 // Relations
 export const habitsRelations = relations(habits, ({ one }) => ({
 	profile: one(profiles, {
-		fields: [habits.createdBy],
+		fields: [habits.created_by],
 		references: [profiles.id],
 	}),
 }));
 
 export const historyRelations = relations(history, ({ one }) => ({
 	habit: one(habits, {
-		fields: [history.habitId],
+		fields: [history.habit_id],
 		references: [habits.id],
 	}),
 	profile: one(profiles, {
-		fields: [history.userUuid],
+		fields: [history.user_uuid],
 		references: [profiles.id],
 	}),
 }));
