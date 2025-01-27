@@ -4,7 +4,9 @@ import { writable, derived, get } from 'svelte/store';
 import type { Writable, Readable } from 'svelte/store';
 import { openDB, type IDBPDatabase } from 'idb';
 
-// Type definitions
+const DB_NAME = 'localSync';
+const DB_VERSION = 1;
+
 export type SyncStatus = 'synced' | 'pending' | 'error';
 
 export interface SyncOperation<T> {
@@ -70,7 +72,6 @@ export class SyncEngine<T extends { id: string }> {
 		await this.loadFromIndexedDB();
 
 		// Setup online/offline listeners
-		console.log('adding event listeners')
 		window.addEventListener('online', this.handleOnline);
 		window.addEventListener('offline', this.handleOffline);
 
@@ -84,10 +85,17 @@ export class SyncEngine<T extends { id: string }> {
 		if (!this.isBrowser) return null;
 
 		try {
-			return await openDB('syncStore', 1, {
+			return await openDB(DB_NAME, DB_VERSION, {
 				upgrade(db) {
-					if (!db.objectStoreNames.contains('store')) {
-						db.createObjectStore('store');
+					// Create object stores if they don't exist
+					if (!db.objectStoreNames.contains('data')) {
+						db.createObjectStore('data');
+					}
+					if (!db.objectStoreNames.contains('operations')) {
+						db.createObjectStore('operations');
+					}
+					if (!db.objectStoreNames.contains('metadata')) {
+						db.createObjectStore('metadata');
 					}
 				}
 			});
@@ -103,11 +111,30 @@ export class SyncEngine<T extends { id: string }> {
 
 		try {
 			const state = get(this.store);
-			await indexedDB.put('store', {
-				data: Array.from(state.data.entries()),
-				operations: state.operations,
-				lastSynced: state.lastSynced
-			}, this.table);
+			const tx = indexedDB.transaction(['data', 'operations', 'metadata'], 'readwrite');
+
+			// Save data
+			await tx.objectStore('data').put(
+				Array.from(state.data.entries()),
+				this.table
+			);
+
+			// Save operations
+			await tx.objectStore('operations').put(
+				state.operations,
+				this.table
+			);
+
+			// Save metadata
+			await tx.objectStore('metadata').put(
+				{
+					lastSynced: state.lastSynced,
+					isOnline: state.isOnline
+				},
+				this.table
+			);
+
+			await tx.done;
 		} catch (error) {
 			console.error('Error saving to IndexedDB:', error);
 		}
@@ -118,17 +145,31 @@ export class SyncEngine<T extends { id: string }> {
 		if (!indexedDB) return;
 
 		try {
-			const stored = await indexedDB.get('store', this.table);
-			if (stored) {
-				this.store.set({
-					data: new Map(stored.data),
-					operations: stored.operations,
-					lastSynced: stored.lastSynced,
-					isOnline: navigator.onLine
-				});
-			}
+			const tx = indexedDB.transaction(['data', 'operations', 'metadata'], 'readonly');
+
+			const [data, operations, metadata] = await Promise.all([
+				tx.objectStore('data').get(this.table),
+				tx.objectStore('operations').get(this.table),
+				tx.objectStore('metadata').get(this.table)
+			]);
+
+			await tx.done;
+
+			this.store.set({
+				data: new Map(data || []),
+				operations: operations || [],
+				lastSynced: metadata?.lastSynced || Date.now(),
+				isOnline: this.isBrowser ? navigator.onLine : false
+			});
 		} catch (error) {
 			console.error('Error loading from IndexedDB:', error);
+			// Initialize with empty state if loading fails
+			this.store.set({
+				data: new Map(),
+				operations: [],
+				lastSynced: Date.now(),
+				isOnline: this.isBrowser ? navigator.onLine : false
+			});
 		}
 	}
 

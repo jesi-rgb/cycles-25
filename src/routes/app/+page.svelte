@@ -19,15 +19,14 @@
 	const syncEngine = new SyncEngine<Habit>(supabase, 'habits');
 	let error: string | null = $state(null);
 
-	const groupedHabits = $derived(() => {
-		const habits = syncEngine.data;
-		return habits.reduce((acc: { [key: string]: Habit[] }, habit: number) => {
+	const groupedHabits = syncEngine.data.subscribe((data) =>
+		data.reduce((acc: { [key: string]: Habit[] }, habit: Habit) => {
 			const category = habit.category || 'Uncategorized';
 			if (!acc[category]) acc[category] = [];
 			acc[category].push(habit);
 			return acc;
-		}, {});
-	});
+		}, {})
+	);
 
 	async function handleSignOut() {
 		const { error } = await signOut();
