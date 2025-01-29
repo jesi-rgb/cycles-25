@@ -207,12 +207,12 @@ export class SyncEngine<T extends { id: string }> {
 	};
 
 	public async create(item: Omit<T, 'id'>): Promise<T> {
-		const id = crypto.randomUUID();
-		const newItem = { ...item, id } as T;
+		const newId = crypto.randomUUID();
+		const newItem = { ...item } as T;
 
 		this.store.update(state => {
 			const newData = new Map(state.data);
-			newData.set(id, newItem);
+			newData.set(newId, newItem);
 
 			return {
 				...state,
@@ -229,10 +229,9 @@ export class SyncEngine<T extends { id: string }> {
 		});
 
 		if (this.isBrowser) {
-			console.log('saving to dadtabase')
 			await this.saveToIndexedDB();
 			if (navigator.onLine) {
-				this.sync();
+				setTimeout(() => this.sync(), 100);
 			}
 		}
 
@@ -349,6 +348,8 @@ export class SyncEngine<T extends { id: string }> {
 		if (this.isBrowser) {
 			await this.saveToIndexedDB();
 		}
+
+		console.log('synced')
 
 	}
 

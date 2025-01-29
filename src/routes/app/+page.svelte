@@ -7,6 +7,8 @@
 	import { get } from 'svelte/store';
 	import { onMount } from 'svelte';
 
+	let userId = $derived($user?.id);
+
 	interface Habit {
 		id: string;
 		title: string;
@@ -19,11 +21,6 @@
 
 	const syncEngine = new SyncEngine<Habit>(supabase, 'habits');
 	const data = syncEngine.data;
-	console.log($data);
-
-	let error: string | null = $state(null);
-
-	let userId = $derived($user?.id);
 
 	let groupedHabits: { [key: string]: Habit[] } = $derived(
 		$data.reduce((acc: { [key: string]: Habit[] }, habit: Habit) => {
