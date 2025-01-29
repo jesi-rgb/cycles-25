@@ -31,9 +31,9 @@ export class SyncEngine<T extends { id: string }> {
 	private table: string;
 	private isBrowser: boolean;
 
-	public data: Readable<T[]>;
-	public pendingCount: Readable<number>;
-	public errorCount: Readable<number>;
+	public readonly data: { subscribe: Readable<T[]>['subscribe'] };
+	public readonly pendingCount: { subscribe: Readable<number>['subscribe'] };
+	public readonly errorCount: { subscribe: Readable<number>['subscribe'] };
 
 	constructor(supabaseClient: SupabaseClient, tableName: string) {
 		this.db = supabaseClient;
@@ -74,6 +74,30 @@ export class SyncEngine<T extends { id: string }> {
 		// Setup online/offline listeners
 		window.addEventListener('online', this.handleOnline);
 		window.addEventListener('offline', this.handleOffline);
+
+		// Initial fetch of data from Supabase
+		try {
+			const { data: userData } = await this.db.auth.getUser()
+			const userId = userData.user?.id
+
+			const { data, error } = await this.db
+				.from(this.table)
+				.select('*').eq('created_by', userId);
+
+			if (error) throw error;
+
+			if (data) {
+				this.store.update(state => ({
+					...state,
+					data: new Map(data.map(item => [item.id, item]))
+				}));
+
+				//console.log(get(this.store).data)
+				await this.saveToIndexedDB();
+			}
+		} catch (error) {
+			console.error('Error fetching initial data:', error);
+		}
 
 		// Initial sync if online
 		if (navigator.onLine) {
@@ -175,7 +199,6 @@ export class SyncEngine<T extends { id: string }> {
 
 	private handleOnline = () => {
 		this.store.update(state => ({ ...state, isOnline: true }));
-		console.log('syncing...')
 		this.sync();
 	};
 
@@ -206,6 +229,7 @@ export class SyncEngine<T extends { id: string }> {
 		});
 
 		if (this.isBrowser) {
+			console.log('saving to dadtabase')
 			await this.saveToIndexedDB();
 			if (navigator.onLine) {
 				this.sync();
@@ -325,6 +349,7 @@ export class SyncEngine<T extends { id: string }> {
 		if (this.isBrowser) {
 			await this.saveToIndexedDB();
 		}
+
 	}
 
 	public destroy() {

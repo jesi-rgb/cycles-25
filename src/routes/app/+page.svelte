@@ -2,9 +2,10 @@
 	import { goto } from '$app/navigation';
 	import { signOut } from '$lib/utils';
 	import { supabase } from '$lib/supabaseClient';
-	import { user } from '../../stores';
+	import { user } from '../../stores/user';
 	import { SyncEngine } from '$lib/syncEngine';
 	import { get } from 'svelte/store';
+	import { onMount } from 'svelte';
 
 	interface Habit {
 		id: string;
@@ -12,15 +13,20 @@
 		category: string;
 		target_count: number;
 		current_count: number;
+		created_by: string;
 		cycle: 'daily' | 'weekly';
-		user_id: string;
 	}
 
 	const syncEngine = new SyncEngine<Habit>(supabase, 'habits');
+	const data = syncEngine.data;
+	console.log($data);
+
 	let error: string | null = $state(null);
 
-	const groupedHabits = syncEngine.data.subscribe((data) =>
-		data.reduce((acc: { [key: string]: Habit[] }, habit: Habit) => {
+	let userId = $derived($user?.id);
+
+	let groupedHabits: { [key: string]: Habit[] } = $derived(
+		$data.reduce((acc: { [key: string]: Habit[] }, habit: Habit) => {
 			const category = habit.category || 'Uncategorized';
 			if (!acc[category]) acc[category] = [];
 			acc[category].push(habit);
@@ -53,21 +59,15 @@
 
 	async function handleCreate(event: SubmitEvent) {
 		event.preventDefault();
-		await syncEngine.create({
+		const newItem = await syncEngine.create({
 			...newHabit,
-			user_id: $user?.id!
+			created_by: userId!
 		});
+
+		console.log(newItem);
 
 		const modal = document.getElementById('habit_modal') as HTMLDialogElement;
 		modal.close();
-
-		newHabit = {
-			title: '',
-			category: '',
-			target_count: 1,
-			current_count: 0,
-			cycle: 'daily'
-		};
 	}
 
 	async function handleDelete(id: string) {
