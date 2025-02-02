@@ -1,5 +1,5 @@
 
-export type Habit = {
+export type HabitType = {
 	id: string;
 	title: string;
 	category: string;

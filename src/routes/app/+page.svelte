@@ -1,21 +1,18 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { signOut } from '$lib/utils';
-	import { supabase } from '$lib/supabaseClient';
 	import { user } from '../../stores/user';
-	import { SyncEngine } from '$lib/syncEngine';
 	import { onMount } from 'svelte';
 	import { syncEngine } from '../../stores/syncStore';
 	import CreateModal from '$lib/components/CreateModal.svelte';
 	import Habit from '$lib/components/Habit.svelte';
 	import { Info } from 'phosphor-svelte';
-
-	let userId = $derived($user?.id);
+	import type { HabitType } from '$lib/types';
 
 	const data = syncEngine.data;
 
-	let groupedHabits: { [key: string]: Habit[] } = $derived(
-		$data.reduce((acc: { [key: string]: Habit[] }, habit: Habit) => {
+	let groupedHabits: { [key: string]: HabitType[] } = $derived(
+		$data.reduce((acc: { [key: string]: HabitType[] }, habit: HabitType) => {
 			const category = habit.category || 'Uncategorized';
 			if (!acc[category]) acc[category] = [];
 			acc[category].push(habit);
@@ -24,11 +21,10 @@
 	);
 
 	let loading: boolean = $state(true);
-	$inspect(loading);
 	let online: boolean = $state(false);
 
 	onMount(() => {
-		loading = false;
+		setTimeout(() => (loading = false), 1);
 	});
 
 	async function handleSignOut() {
@@ -58,7 +54,7 @@
 	</div>
 </div>
 
-{#if user && !loading}
+{#if user && $data.length > 0}
 	{#if Object.keys(groupedHabits).length === 0}
 		<div class="alert alert-info">
 			<Info />
@@ -79,12 +75,3 @@
 <CreateModal />
 
 <svelte:window bind:online />
-
-<style>
-	.fraction {
-		font-variation-settings:
-			'MONO' 0,
-			'CASL' 0.5;
-		font-variant-numeric: diagonal-fractions;
-	}
-</style>

@@ -95,4 +95,7 @@
 @theme cycles {
 	--font-sans: Monaspace Radon;
 	--font-count: Recursive;
+
+	--color-primary-200: oklch(from var(--color-primary-content) calc(l + 0.13) calc(c + 0.01) h);
+	--color-info-200: oklch(from var(--color-info) calc(l + 0.13) calc(c + 0.01) h);
 }
