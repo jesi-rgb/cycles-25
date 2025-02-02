@@ -1,5 +1,12 @@
 @import 'tailwindcss';
 
+@font-face {
+	font-family: 'Recursive';
+	font-style: normal;
+	font-weight: 1000;
+	src: url('/fonts/Recursive.ttf');
+}
+
 @plugin '@tailwindcss/typography';
 
 @plugin "daisyui" {
@@ -85,6 +92,7 @@
 	src: url('/Fonts/TASA-Explorer.woff2') format('woff2');
 }
 
-@theme cupcake {
+@theme cycles {
 	--font-sans: Monaspace Radon;
+	--font-count: Recursive;
 }

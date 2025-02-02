@@ -332,7 +332,6 @@ export class SyncEngine<T extends { id: string }> {
 		const pendingOps = state.operations.filter(op => op.status === 'pending');
 
 		for (const op of pendingOps) {
-			console.log('Processing operation:', op);
 			try {
 				switch (op.type) {
 					case 'create':
