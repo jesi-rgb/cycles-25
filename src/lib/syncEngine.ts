@@ -76,6 +76,27 @@ export class SyncEngine<T extends { id: string }> {
 		window.addEventListener('offline', this.handleOffline);
 
 		// Initial fetch of data from Supabase
+
+		// Initial sync if online
+		if (navigator.onLine) {
+			this.push();
+		}
+
+		this.pull()
+
+		// Periodic sync
+		setInterval(() => {
+			if (navigator.onLine) {
+				this.push();
+			}
+			console.log('Periodic sync');
+		}, 1000 * 60);
+	}
+
+	/*
+	 * "Pull" data from supabase
+	 * */
+	private async pull() {
 		try {
 			const { data: userData } = await this.db.auth.getUser()
 			const userId = userData.user?.id
@@ -92,16 +113,10 @@ export class SyncEngine<T extends { id: string }> {
 					data: new Map(data.map(item => [item.id, item]))
 				}));
 
-				//console.log(get(this.store).data)
 				await this.saveToIndexedDB();
 			}
 		} catch (error) {
 			console.error('Error fetching initial data:', error);
-		}
-
-		// Initial sync if online
-		if (navigator.onLine) {
-			this.sync();
 		}
 	}
 
@@ -137,9 +152,9 @@ export class SyncEngine<T extends { id: string }> {
 			const state = get(this.store);
 			const tx = indexedDB.transaction(['data', 'operations', 'metadata'], 'readwrite');
 
-			// Save data
+			// Save data as array of objects
 			await tx.objectStore('data').put(
-				Array.from(state.data.entries()),
+				Array.from(state.data.values()),
 				this.table
 			);
 
@@ -179,8 +194,13 @@ export class SyncEngine<T extends { id: string }> {
 
 			await tx.done;
 
+			// Convert array of objects to Map
+			const dataMap = new Map<string, T>(
+				(data || []).map(item => [item.id, item])
+			);
+
 			this.store.set({
-				data: new Map(data || []),
+				data: dataMap,
 				operations: operations || [],
 				lastSynced: metadata?.lastSynced || Date.now(),
 				isOnline: this.isBrowser ? navigator.onLine : false
@@ -199,7 +219,7 @@ export class SyncEngine<T extends { id: string }> {
 
 	private handleOnline = () => {
 		this.store.update(state => ({ ...state, isOnline: true }));
-		this.sync();
+		this.push();
 	};
 
 	private handleOffline = () => {
@@ -231,11 +251,16 @@ export class SyncEngine<T extends { id: string }> {
 		if (this.isBrowser) {
 			await this.saveToIndexedDB();
 			if (navigator.onLine) {
-				setTimeout(() => this.sync(), 100);
+				this.push()
 			}
 		}
 
-		return newItem;
+		//wait and pull data from supabase
+		setTimeout(() => {
+			this.pull()
+		}, 100)
+		return newItem
+
 	}
 
 	public async update(id: string, updates: Partial<T>): Promise<void> {
@@ -264,7 +289,7 @@ export class SyncEngine<T extends { id: string }> {
 		if (this.isBrowser) {
 			await this.saveToIndexedDB();
 			if (navigator.onLine) {
-				this.sync();
+				this.push();
 			}
 		}
 	}
@@ -294,30 +319,37 @@ export class SyncEngine<T extends { id: string }> {
 		if (this.isBrowser) {
 			await this.saveToIndexedDB();
 			if (navigator.onLine) {
-				this.sync();
+				this.push();
 			}
 		}
 	}
 
-	private async sync() {
+	/*
+	 * Push data to Supabase
+	 */
+	private async push() {
 		const state = get(this.store);
 		const pendingOps = state.operations.filter(op => op.status === 'pending');
 
 		for (const op of pendingOps) {
+			console.log('Processing operation:', op);
 			try {
 				switch (op.type) {
 					case 'create':
-						await this.db.from(this.table).insert(op.data);
+						const { error: createError } = await this.db.from(this.table).insert(op.data);
+						if (createError) throw createError;
 						break;
 					case 'update':
-						await this.db.from(this.table)
+						const { error: updateError } = await this.db.from(this.table)
 							.update(op.data)
 							.eq('id', op.data.id);
+						if (updateError) throw updateError;
 						break;
 					case 'delete':
-						await this.db.from(this.table)
+						const { error: deleteError } = await this.db.from(this.table)
 							.delete()
 							.eq('id', op.data.id);
+						if (deleteError) throw deleteError;
 						break;
 				}
 
@@ -328,13 +360,13 @@ export class SyncEngine<T extends { id: string }> {
 					)
 				}));
 			} catch (error) {
+				console.error('Sync error for operation:', op.id, error);
 				this.store.update(state => ({
 					...state,
 					operations: state.operations.map(o =>
 						o.id === op.id ? { ...o, status: 'error' } : o
 					)
 				}));
-				console.error('Sync error:', error);
 			}
 		}
 
@@ -345,12 +377,11 @@ export class SyncEngine<T extends { id: string }> {
 			lastSynced: Date.now()
 		}));
 
+
+		// Save the clean state to IndexedDB
 		if (this.isBrowser) {
 			await this.saveToIndexedDB();
 		}
-
-		console.log('synced')
-
 	}
 
 	public destroy() {

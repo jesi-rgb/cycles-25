@@ -4,7 +4,6 @@
 	import { supabase } from '$lib/supabaseClient';
 	import { user } from '../../stores/user';
 	import { SyncEngine } from '$lib/syncEngine';
-	import { get } from 'svelte/store';
 	import { onMount } from 'svelte';
 
 	let userId = $derived($user?.id);
@@ -30,6 +29,14 @@
 			return acc;
 		}, {})
 	);
+
+	let loading: boolean = $state(true);
+	$inspect(loading);
+	let online: boolean = $state(false);
+
+	onMount(() => {
+		loading = false;
+	});
 
 	async function handleSignOut() {
 		const { error } = await signOut();
@@ -74,31 +81,25 @@
 </script>
 
 <div class="mb-8 flex items-center justify-between">
-	<h1 class="text-3xl font-bold">Dashboard</h1>
+	<div class="flex items-center gap-4">
+		<h1 class="text-3xl font-bold">Cycles</h1>
+		{#if online}
+			<div class="bg-success size-2 rounded-full"></div>
+		{:else}
+			<div class="bg-error size-2 rounded-full"></div>
+		{/if}
+	</div>
 	<div class="flex gap-2">
 		<button
 			class="btn btn-primary"
 			onclick={() => (document.getElementById('habit_modal') as HTMLDialogElement).showModal()}
 			>New Habit</button
 		>
-		<button class="btn btn-outline" onclick={handleSignOut}>Sign out</button>
+		<button class="btn btn-soft btn-secondary" onclick={handleSignOut}>Sign out</button>
 	</div>
 </div>
 
-{#if user}
-	<div class="status mb-4">
-		{#if syncEngine.getPendingCount > 0}
-			<div class="alert alert-info">
-				Syncing {syncEngine.getPendingCount} changes...
-			</div>
-		{/if}
-		{#if syncEngine.getErrorCount > 0}
-			<div class="alert alert-error">
-				Failed to sync {syncEngine.getErrorCount} changes
-			</div>
-		{/if}
-	</div>
-
+{#if user && !loading}
 	{#if Object.keys(groupedHabits).length === 0}
 		<div class="alert alert-info">
 			<svg
@@ -125,7 +126,7 @@
 							<div class="flex items-start justify-between">
 								<div>
 									<h2 class="card-title">{habit.title}</h2>
-									<span class="badge badge-ghost mt-1">{habit.category}</span>
+									<span class="badge badge-soft badge-success mt-1">{habit.cycle}</span>
 								</div>
 								<button
 									aria-label="Delete"
@@ -152,7 +153,9 @@
 							<div class="mt-4">
 								<div class="flex items-center justify-between">
 									<span class="text-sm font-medium">Progress</span>
-									<div>{habit.current_count}/{habit.target_count}</div>
+									<div class="fraction text-3xl">
+										{habit.current_count}/{habit.target_count}
+									</div>
 								</div>
 							</div>
 
@@ -238,3 +241,16 @@
 		</form>
 	</dialog>
 {/if}
+
+<svelte:window bind:online />
+
+<style>
+	.fraction {
+		font-family: 'Recursive';
+		font-variant-numeric: diagonal-fractions;
+		font-variation-settings:
+			'MONO' 0,
+			'CASL' 1;
+		font-weight: 1000;
+	}
+</style>
