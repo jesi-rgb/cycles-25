@@ -1,12 +1,10 @@
 <script lang="ts">
 	import { syncEngine } from '../../stores/syncStore';
-	const { habit } = $props();
-	import type { HabitType } from '$lib/types';
-	import { X } from 'phosphor-svelte';
+	let { habit } = $props();
 
-	async function handleDelete(id: string) {
-		await syncEngine.delete(id);
-	}
+	import type { HabitType } from '$lib/types';
+	import EditModal from './EditModal.svelte';
+	import { PencilRuler } from 'phosphor-svelte';
 
 	async function handleIncrement(habit: HabitType) {
 		await syncEngine.update(habit.id, {
@@ -16,7 +14,7 @@
 </script>
 
 <div class="card-body">
-	<div class="flex items-center gap-10">
+	<div class="flex w-full items-center gap-10">
 		{#if habit.current_count >= habit.target_count}
 			<div class="relative flex items-center justify-center">
 				<div
@@ -54,14 +52,15 @@
 		</div>
 
 		<button
-			class="btn btn-circle btn-error"
-			onclick={() => {
-				handleDelete(habit.id);
-			}}
-			><X weight="bold" />
+			class="btn btn-circle"
+			onclick={() => (document.getElementById('edit_modal') as HTMLDialogElement).showModal()}
+		>
+			<PencilRuler size={24} weight="bold" />
 		</button>
 	</div>
 </div>
+
+<EditModal {habit} />
 
 <style>
 	.radial-progress::after {

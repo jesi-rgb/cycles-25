@@ -258,7 +258,7 @@ export class SyncEngine<T extends { id: string }> {
 		//wait and pull data from supabase
 		setTimeout(() => {
 			this.pull()
-		}, 100)
+		}, 10)
 		return newItem
 
 	}
@@ -268,6 +268,8 @@ export class SyncEngine<T extends { id: string }> {
 			const existing = state.data.get(id);
 			if (!existing) throw new Error('Item not found');
 
+
+			console.log(existing, updates)
 			const updated = { ...existing, ...updates };
 			const newData = new Map(state.data);
 			newData.set(id, updated);

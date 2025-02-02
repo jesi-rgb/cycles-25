@@ -1,7 +1,7 @@
 import { supabase } from '$lib/supabaseClient';
 import { SyncEngine } from '$lib/syncEngine';
-import type { Habit } from '$lib/types';
+import type { HabitType } from '$lib/types';
 
-export const syncEngine = new SyncEngine<Habit>(supabase, 'habits');
+export const syncEngine = new SyncEngine<HabitType>(supabase, 'habits');
 
 

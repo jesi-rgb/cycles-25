@@ -47,7 +47,7 @@
 	<div class="flex gap-2">
 		<button
 			class="btn btn-primary"
-			onclick={() => (document.getElementById('habit_modal') as HTMLDialogElement).showModal()}
+			onclick={() => (document.getElementById('create_modal') as HTMLDialogElement).showModal()}
 			>New Habit</button
 		>
 		<button class="btn btn-soft btn-secondary" onclick={handleSignOut}>Sign out</button>

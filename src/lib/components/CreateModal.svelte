@@ -14,15 +14,10 @@
 
 	async function handleCreate(event: SubmitEvent) {
 		event.preventDefault();
-		const newItem = await syncEngine.create({
+		await syncEngine.create({
 			...newHabit,
 			created_by: userId!
 		});
-
-		console.log(newItem);
-
-		const modal = document.getElementById('habit_modal') as HTMLDialogElement;
-		modal.close();
 
 		newHabit = {
 			title: '',
@@ -31,10 +26,13 @@
 			current_count: 0,
 			cycle: 'daily'
 		};
+
+		const modal = document.getElementById('create_modal') as HTMLDialogElement;
+		modal.close();
 	}
 </script>
 
-<dialog id="habit_modal" class="modal">
+<dialog id="create_modal" class="modal">
 	<div class="modal-box">
 		<h3 class="mb-4 text-lg font-bold">Create New Habit</h3>
 		<form onsubmit={handleCreate} class="space-y-4">
