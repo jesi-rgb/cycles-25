@@ -3,7 +3,7 @@
 	let { habit } = $props();
 
 	import type { HabitType } from '$lib/types';
-	import { PencilRuler } from 'phosphor-svelte';
+	import { PencilRuler, Sliders } from 'phosphor-svelte';
 	import EditModal from './EditModal.svelte';
 
 	async function handleIncrement(habit: HabitType) {
@@ -49,8 +49,11 @@
 
 			<div class="flex flex-col">
 				<h2 class="card-title">{habit.title}</h2>
-				<span class="badge badge-soft badge-xs badge-success mt-1 font-semibold">{habit.cycle}</span
-				>
+				{#if habit.cycle == 'daily'}
+					<span class="badge badge-soft badge-xs badge-primary mt-1 font-bold">{habit.cycle}</span>
+				{:else}
+					<span class="badge badge-soft badge-xs badge-accent mt-1 font-bold">{habit.cycle}</span>
+				{/if}
 			</div>
 		</div>
 
@@ -59,7 +62,7 @@
 			onclick={() =>
 				(document.getElementById(`edit_modal-${habit.id}`) as HTMLDialogElement).showModal()}
 		>
-			<PencilRuler size={24} weight="bold" />
+			<Sliders size={24} weight="bold" />
 		</button>
 	</div>
 </div>

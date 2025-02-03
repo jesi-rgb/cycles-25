@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { DateTime } from 'luxon';
 	import { syncEngine } from '../../stores/syncStore';
 	import { user } from '../../stores/user';
 
@@ -12,11 +13,23 @@
 		cycle: 'daily'
 	});
 
+	function calculateNextUpdate(cycle: 'daily' | 'weekly') {
+		if (cycle === 'daily') {
+			// next day at 3 am resets
+			return DateTime.now().plus({ days: 1 }).startOf('day').set({ hour: 3 }).toISO();
+		} else {
+			//restart next monday at 3am
+			return DateTime.now().plus({ weeks: 1 }).startOf('week').set({ hour: 3 }).toISO();
+		}
+	}
+
 	async function handleCreate(event: SubmitEvent) {
 		event.preventDefault();
 		await syncEngine.create({
 			...newHabit,
-			created_by: userId!
+			cycle: newHabit.cycle as 'daily' | 'weekly',
+			created_by: userId!,
+			next_update: calculateNextUpdate(newHabit.cycle as 'daily' | 'weekly')
 		});
 
 		newHabit = {
@@ -89,7 +102,7 @@
 				<button
 					type="button"
 					class="btn"
-					onclick={() => (document.getElementById('habit_modal') as HTMLDialogElement)?.close()}
+					onclick={() => (document.getElementById('create_modal') as HTMLDialogElement)?.close()}
 				>
 					Cancel
 				</button>

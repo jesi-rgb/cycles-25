@@ -3,22 +3,17 @@
 	import { Trash, Warning } from 'phosphor-svelte';
 
 	import type { HabitType } from '$lib/types';
+	import { DateTime } from 'luxon';
 
 	const { habit } = $props();
 
 	let editedHabit: HabitType = $state({ ...habit });
-
-	$effect(() => {
-		editedHabit = { ...habit };
-	});
-
 	$inspect(editedHabit);
 
 	let confirmDeletion = $state(false);
 
 	async function handleEdit(event: SubmitEvent) {
 		event.preventDefault();
-		console.log('AAAAAaa', editedHabit);
 		await syncEngine.update(habit.id, editedHabit);
 
 		const modal = document.getElementById(`edit_modal-${habit.id}`) as HTMLDialogElement;
@@ -94,6 +89,19 @@
 				</select>
 			</div>
 
+			<div class="form-control">
+				<label for="next_update" class="label">
+					<span id="next_update" class="label-text">Next Update</span>
+				</label>
+				<div class="">
+					{DateTime.fromISO(editedHabit.next_update).toRelativeCalendar()}
+					·
+					<span class="text-muted text-xs"
+						>{DateTime.fromISO(editedHabit.next_update).toRelative()}</span
+					>
+				</div>
+			</div>
+
 			<div class="modal-action">
 				<button
 					type="button"
@@ -121,6 +129,7 @@
 				</button>
 			{:else}
 				<button
+					type="button"
 					class="btn btn-error"
 					onclick={() => {
 						confirmDeletion = true;

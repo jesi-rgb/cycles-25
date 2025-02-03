@@ -13,6 +13,23 @@
 	themes: cycles-light --default, dark --prefersdark;
 }
 
+:root {
+	--subtle: color-mix(in oklab, var(--color-base-content) 20%, transparent);
+	--muted: oklch(0.60 0 none);
+
+}
+
+/* Remove the media query and handle dark mode entirely through the theme system */
+[data-theme="cycles-dark"] {
+	--subtle: color-mix(in oklab, var(--color-base-content) 7%, transparent);
+	--muted: oklch(0.80 0 none);
+}
+
+[data-theme="cycles-light"] {
+	--subtle: color-mix(in oklab, var(--color-base-content) 20%, transparent);
+	--muted: oklch(0.60 0 none);
+}
+
 
 @plugin "daisyui/theme" {
 	name: "cycles-light";
@@ -92,16 +109,15 @@
 	--noise: 0;
 }
 
-@font-face {
-	font-family: 'Inter';
-	font-style: normal;
-	font-weight: 400;
-	src: url('/Fonts/TASA-Explorer.woff2') format('woff2');
-}
+
+
 
 @theme cycles {
-	--font-sans: Monaspace Radon;
+	--font-sans: Cabin;
 	--font-count: Recursive;
+
+	--color-muted: var(--muted);
+	--color-subtle: var(--subtle);
 
 	--color-primary-200: oklch(from var(--color-primary-content) calc(l + 0.13) calc(c + 0.01) h);
 	--color-info-200: oklch(from var(--color-info) calc(l + 0.13) calc(c + 0.01) h);

@@ -7,4 +7,5 @@ export type HabitType = {
 	current_count: number;
 	created_by: string;
 	cycle: 'daily' | 'weekly';
+	next_update: string;
 }
