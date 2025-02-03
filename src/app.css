@@ -7,6 +7,20 @@
 	src: url('/fonts/Recursive.ttf');
 }
 
+@font-face {
+	font-family: 'Monaspace Radon';
+	font-style: normal;
+	font-weight: 400;
+	src: url('/fonts/MonaspaceRadon-Regular.otf');
+}
+
+@font-face {
+	font-family: 'Monaspace Radon';
+	font-style: normal;
+	font-weight: 800;
+	src: url('/fonts/MonaspaceRadon-ExtraBold.otf');
+}
+
 @plugin '@tailwindcss/typography';
 
 @plugin "daisyui" {
@@ -113,7 +127,7 @@
 
 
 @theme cycles {
-	--font-sans: Cabin;
+	--font-sans: Monaspace Radon;
 	--font-count: Recursive;
 
 	--color-muted: var(--muted);

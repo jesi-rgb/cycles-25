@@ -48,7 +48,7 @@
 			{/if}
 
 			<div class="flex flex-col">
-				<h2 class="card-title">{habit.title}</h2>
+				<h2 class="card-title font-normal">{habit.title}</h2>
 				{#if habit.cycle == 'daily'}
 					<span class="badge badge-soft badge-xs badge-primary mt-1 font-bold">{habit.cycle}</span>
 				{:else}
