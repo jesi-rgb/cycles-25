@@ -18,30 +18,36 @@ export interface SyncOperation<T> {
 	status: SyncStatus;
 }
 
-export interface SyncState<T> {
-	data: Map<string, T>;
+export interface SyncState<T, K extends keyof T> {
+	data: Map<T[K], T>;
 	operations: SyncOperation<T>[];
 	lastSynced: number;
 	isOnline: boolean;
 }
 
-export class SyncEngine<T extends { id: string }> {
-	private store: Writable<SyncState<T>>;
+export class SyncEngine<T, K extends keyof T> {
+	private store: Writable<SyncState<T, K>>;
 	private db: SupabaseClient;
 	private table: string;
+	private primaryKey: K;
 	private isBrowser: boolean;
 
 	public readonly data: { subscribe: Readable<T[]>['subscribe'] };
 	public readonly pendingCount: { subscribe: Readable<number>['subscribe'] };
 	public readonly errorCount: { subscribe: Readable<number>['subscribe'] };
 
-	constructor(supabaseClient: SupabaseClient, tableName: string) {
+	constructor(
+		supabaseClient: SupabaseClient,
+		tableName: string,
+		primaryKey: K = 'id' as K
+	) {
+		this.primaryKey = primaryKey;
 		this.db = supabaseClient;
 		this.table = tableName;
 		this.isBrowser = typeof window !== 'undefined';
 
 		// Initialize the store
-		this.store = writable<SyncState<T>>({
+		this.store = writable<SyncState<T, K>>({
 			data: new Map(),
 			operations: [],
 			lastSynced: Date.now(),
@@ -195,8 +201,8 @@ export class SyncEngine<T extends { id: string }> {
 			await tx.done;
 
 			// Convert array of objects to Map
-			const dataMap = new Map<string, T>(
-				(data || []).map(item => [item.id, item])
+			const dataMap = new Map<T[K], T>(
+				(data || []).map(item => [item[this.primaryKey], item])
 			);
 
 			this.store.set({
@@ -226,23 +232,18 @@ export class SyncEngine<T extends { id: string }> {
 		this.store.update(state => ({ ...state, isOnline: false }));
 	};
 
-	public async create(item: Omit<T, 'id'>): Promise<T> {
-		const newId = crypto.randomUUID();
-		const newItem = { ...item } as T;
+	public async create(item: Omit<T, K>): Promise<void> {
+		const tempId = crypto.randomUUID();
 
 		this.store.update(state => {
-			const newData = new Map(state.data);
-			newData.set(newId, newItem);
-
 			return {
 				...state,
-				data: newData,
 				operations: [...state.operations, {
-					id: crypto.randomUUID(),
+					id: tempId,
 					timestamp: Date.now(),
 					type: 'create',
 					table: this.table,
-					data: newItem,
+					data: item as any, // We don't have the ID yet
 					status: 'pending'
 				}]
 			};
@@ -251,19 +252,13 @@ export class SyncEngine<T extends { id: string }> {
 		if (this.isBrowser) {
 			await this.saveToIndexedDB();
 			if (navigator.onLine) {
-				this.push()
+				await this.push();
+				await this.pull(); // Pull to get the server-generated ID
 			}
 		}
-
-		//wait and pull data from supabase
-		setTimeout(() => {
-			this.pull()
-		}, 10)
-		return newItem
-
 	}
 
-	public async update(id: string, updates: Partial<T>): Promise<void> {
+	public async update(id: T[K], updates: Partial<T>): Promise<void> {
 		this.store.update(state => {
 			const existing = state.data.get(id);
 			if (!existing) throw new Error('Item not found');
@@ -296,7 +291,7 @@ export class SyncEngine<T extends { id: string }> {
 		}
 	}
 
-	public async delete(id: string): Promise<void> {
+	public async delete(id: T[K]): Promise<void> {
 		this.store.update(state => {
 			const item = state.data.get(id);
 			if (!item) throw new Error('Item not found');
@@ -340,18 +335,22 @@ export class SyncEngine<T extends { id: string }> {
 						const { error: createError } = await this.db.from(this.table).insert(op.data);
 						if (createError) throw createError;
 						break;
-					case 'update':
+					case 'update': {
+						const { [this.primaryKey]: pk, ...updateData } = op.data;
 						const { error: updateError } = await this.db.from(this.table)
-							.update(op.data)
-							.eq('id', op.data.id);
+							.update(updateData)
+							.eq(this.primaryKey as string, pk);
 						if (updateError) throw updateError;
 						break;
-					case 'delete':
+					}
+					case 'delete': {
+						const pk = op.data[this.primaryKey];
 						const { error: deleteError } = await this.db.from(this.table)
 							.delete()
-							.eq('id', op.data.id);
+							.eq(this.primaryKey as string, pk);
 						if (deleteError) throw deleteError;
 						break;
+					}
 				}
 
 				this.store.update(state => ({
@@ -383,6 +382,25 @@ export class SyncEngine<T extends { id: string }> {
 		if (this.isBrowser) {
 			await this.saveToIndexedDB();
 		}
+	}
+
+
+	public async createAndReturn(item: Omit<T, K>): Promise<T | null> {
+		const { data, error } = await this.db
+			.from(this.table)
+			.insert(item)
+			.select()
+			.single();
+
+		if (error) {
+			console.error(`Error creating item in ${this.table}:`, error);
+			return null;
+		}
+
+		// Update local state
+		await this.pull();
+
+		return data;
 	}
 
 	public destroy() {

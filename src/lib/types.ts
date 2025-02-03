@@ -9,3 +9,15 @@ export type HabitType = {
 	cycle: 'daily' | 'weekly';
 	next_update: string;
 }
+
+
+export type HistoryType = {
+	id: string;              // int8, primary key
+	habit_id: string;        // int8, foreign key
+	current_count: number;   // int4
+	target_count: number;    // int4
+	user_uuid: string;       // uuid
+	type: string;           // text
+	completed: boolean;      // bool
+	timestamp: string;        // timestamptz
+}

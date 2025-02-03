@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { DateTime } from 'luxon';
-	import { syncEngine } from '../../stores/syncStore';
+	import { syncEngine, syncHistory } from '../../stores/syncStore';
 	import { user } from '../../stores/user';
 
 	let userId = $derived($user?.id);
@@ -25,11 +25,29 @@
 
 	async function handleCreate(event: SubmitEvent) {
 		event.preventDefault();
-		await syncEngine.create({
+
+		// Create the habit
+		const newHabitData = await syncEngine.createAndReturn({
 			...newHabit,
 			cycle: newHabit.cycle as 'daily' | 'weekly',
 			created_by: userId!,
 			next_update: calculateNextUpdate(newHabit.cycle as 'daily' | 'weekly')
+		});
+
+		if (!newHabitData) {
+			console.error('Error creating habit');
+			return;
+		}
+
+		// Now we have the habit with its server-generated ID
+		await syncHistory.create({
+			user_uuid: userId!,
+			type: 'create',
+			timestamp: new Date().toISOString(),
+			target_count: newHabitData.target_count,
+			current_count: 0,
+			habit_id: newHabitData.id,
+			completed: false
 		});
 
 		newHabit = {

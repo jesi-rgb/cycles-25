@@ -13,7 +13,7 @@
 	}
 </script>
 
-<div class="card-body">
+<div class="px-1 py-4">
 	<div class="flex w-full items-center justify-between gap-10">
 		<div class="flex items-center gap-10">
 			{#if habit.current_count >= habit.target_count}
@@ -62,7 +62,7 @@
 			onclick={() =>
 				(document.getElementById(`edit_modal-${habit.id}`) as HTMLDialogElement).showModal()}
 		>
-			<Sliders size={24} weight="bold" />
+			<Sliders size={24} weight="duotone" />
 		</button>
 	</div>
 </div>

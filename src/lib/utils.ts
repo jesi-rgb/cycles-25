@@ -68,7 +68,23 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 
-export async function updateTimesAndReset(habit: HabitType) {
+
+export function calculateNextUpdate(cycle: 'daily' | 'weekly') {
+
+	if (cycle == "daily") {
+		return DateTime.now()
+			.plus({ days: 1 })
+			.startOf("day")
+			.set({ hour: 3 }).toISO();
+	} else {
+		return DateTime.now()
+			.plus({ weeks: 1 })
+			.startOf("week")
+			.set({ hour: 3 }).toISO();
+	}
+}
+
+export function updateTimesAndReset(habit: HabitType) {
 	// check if any of the habits have expired and
 	// update their next_update property as well as their
 	// current_count resetting to 0
@@ -93,6 +109,7 @@ export async function updateTimesAndReset(habit: HabitType) {
 
 		habit.next_update = updatedTime.toISO();
 		habit.current_count = 0;
-		await syncEngine.update(habit.id, habit);
 	}
+
+	return habit
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { syncEngine } from '../../stores/syncStore';
 	import { Trash, Warning } from 'phosphor-svelte';
+	import { updateTimesAndReset, calculateNextUpdate } from '$lib/utils';
 
 	import type { HabitType } from '$lib/types';
 	import { DateTime } from 'luxon';
@@ -8,12 +9,19 @@
 	const { habit } = $props();
 
 	let editedHabit: HabitType = $state({ ...habit });
-	$inspect(editedHabit);
 
 	let confirmDeletion = $state(false);
 
 	async function handleEdit(event: SubmitEvent) {
 		event.preventDefault();
+
+		editedHabit = {
+			...editedHabit,
+			cycle: editedHabit.cycle as 'daily' | 'weekly'
+		};
+
+		editedHabit.next_update = calculateNextUpdate(editedHabit.cycle as 'daily' | 'weekly');
+
 		await syncEngine.update(habit.id, editedHabit);
 
 		const modal = document.getElementById(`edit_modal-${habit.id}`) as HTMLDialogElement;

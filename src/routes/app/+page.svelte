@@ -4,11 +4,9 @@
 	import { user } from '../../stores/user';
 	import { onMount } from 'svelte';
 	import { syncEngine } from '../../stores/syncStore';
-	import CreateModal from '$lib/components/CreateModal.svelte';
 	import Habit from '$lib/components/Habit.svelte';
 	import { Info, PlusCircle } from 'phosphor-svelte';
 	import type { HabitType } from '$lib/types';
-	import EditModal from '$lib/components/EditModal.svelte';
 
 	const data = syncEngine.data;
 
@@ -29,7 +27,8 @@
 
 		$data.map(async (habit) => {
 			console.log(habit);
-			await updateTimesAndReset(habit);
+			habit = updateTimesAndReset(habit);
+			await syncEngine.update(habit.id, habit);
 		});
 	});
 
@@ -71,15 +70,6 @@
 			</div>
 		{/if}
 	{/if}
-
-	<button
-		class="btn btn-primary btn-circle btn-soft fixed right-10 bottom-10"
-		onclick={() => (document.getElementById('create_modal') as HTMLDialogElement).showModal()}
-	>
-		<PlusCircle weight="bold" size={24} />
-	</button>
 </main>
-
-<CreateModal />
 
 <svelte:window bind:online />
