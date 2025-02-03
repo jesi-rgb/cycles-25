@@ -21,7 +21,7 @@
 		console.log('AAAAAaa', editedHabit);
 		await syncEngine.update(habit.id, editedHabit);
 
-		const modal = document.getElementById('edit_modal') as HTMLDialogElement;
+		const modal = document.getElementById(`edit_modal-${habit.id}`) as HTMLDialogElement;
 		modal.close();
 	}
 
@@ -30,7 +30,7 @@
 	}
 </script>
 
-<dialog id="edit_modal" class="modal">
+<dialog id={`edit_modal-${habit.id}`} class="modal">
 	<div class="modal-box">
 		<h3 class="mb-4 text-lg font-bold">Edit Habit</h3>
 		<form onsubmit={handleEdit} class="space-y-4">
@@ -99,7 +99,7 @@
 					type="button"
 					class="btn"
 					onclick={() => {
-						(document.getElementById('edit_modal') as HTMLDialogElement)?.close();
+						(document.getElementById(`edit_modal-${habit.id}`) as HTMLDialogElement)?.close();
 						confirmDeletion = false;
 					}}
 				>

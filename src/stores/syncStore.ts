@@ -5,3 +5,4 @@ import type { HabitType } from '$lib/types';
 export const syncEngine = new SyncEngine<HabitType>(supabase, 'habits');
 
 
+

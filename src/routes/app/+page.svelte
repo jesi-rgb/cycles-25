@@ -8,6 +8,7 @@
 	import Habit from '$lib/components/Habit.svelte';
 	import { Info } from 'phosphor-svelte';
 	import type { HabitType } from '$lib/types';
+	import EditModal from '$lib/components/EditModal.svelte';
 
 	const data = syncEngine.data;
 
