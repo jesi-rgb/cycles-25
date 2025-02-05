@@ -1,14 +1,26 @@
 <script lang="ts">
-	import { syncEngine } from '../../stores/syncStore';
+	import { syncEngine, syncHistory } from '../../stores/syncStore';
 	let { habit } = $props();
 
 	import type { HabitType } from '$lib/types';
 	import { PencilRuler, Sliders } from 'phosphor-svelte';
 	import EditModal from './EditModal.svelte';
+	import { user } from '../../stores/user';
+	import { DateTime } from 'luxon';
 
 	async function handleIncrement(habit: HabitType) {
 		await syncEngine.update(habit.id, {
 			current_count: habit.current_count + 1
+		});
+
+		await syncHistory.create({
+			user_uuid: $user?.id!,
+			type: 'update',
+			timestamp: DateTime.now().toISO(),
+			target_count: habit.target_count,
+			current_count: habit.current_count,
+			habit_id: habit.id,
+			completed: habit.current_count >= habit.target_count
 		});
 	}
 </script>

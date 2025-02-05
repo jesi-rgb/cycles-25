@@ -25,12 +25,24 @@ export interface SyncState<T, K extends keyof T> {
 	isOnline: boolean;
 }
 
+// Define types for customization
+export type QueryBuilder<T> = (query: any) => any;
+export type DataTransformer<T> = (data: T) => any;
+
+export interface SyncEngineOptions<T> {
+	queryBuilder?: QueryBuilder<T>;        // Customize how data is queried
+	createTransform?: DataTransformer<T>;  // Transform data before creation
+	updateTransform?: DataTransformer<T>;  // Transform data before updates
+	filterData?: (data: T) => boolean;     // Filter data after fetching
+}
+
 export class SyncEngine<T, K extends keyof T> {
 	private store: Writable<SyncState<T, K>>;
 	private db: SupabaseClient;
 	private table: string;
 	private primaryKey: K;
 	private isBrowser: boolean;
+	private options: SyncEngineOptions<T>;
 
 	public readonly data: { subscribe: Readable<T[]>['subscribe'] };
 	public readonly pendingCount: { subscribe: Readable<number>['subscribe'] };
@@ -39,8 +51,16 @@ export class SyncEngine<T, K extends keyof T> {
 	constructor(
 		supabaseClient: SupabaseClient,
 		tableName: string,
-		primaryKey: K = 'id' as K
+		primaryKey: K = 'id' as K,
+		options: SyncEngineOptions<T> = {}
 	) {
+		this.options = {
+			queryBuilder: (query) => query,
+			createTransform: (data) => data,
+			updateTransform: (data) => data,
+			filterData: () => true,
+			...options
+		};
 		this.primaryKey = primaryKey;
 		this.db = supabaseClient;
 		this.table = tableName;
@@ -104,12 +124,16 @@ export class SyncEngine<T, K extends keyof T> {
 	 * */
 	private async pull() {
 		try {
-			const { data: userData } = await this.db.auth.getUser()
-			const userId = userData.user?.id
-
-			const { data, error } = await this.db
+			let query = this.db
 				.from(this.table)
-				.select('*').eq('created_by', userId);
+				.select('*');
+
+			// Apply custom query modifications
+
+			const builder = this.options.queryBuilder!
+			query = builder(query);
+
+			const { data, error } = await query;
 
 			if (error) throw error;
 
@@ -234,6 +258,8 @@ export class SyncEngine<T, K extends keyof T> {
 
 	public async create(item: Omit<T, K>): Promise<void> {
 		const tempId = crypto.randomUUID();
+		const createTrans = this.options.createTransform!
+		const transformedData = createTrans(item as T);
 
 		this.store.update(state => {
 			return {
@@ -243,7 +269,7 @@ export class SyncEngine<T, K extends keyof T> {
 					timestamp: Date.now(),
 					type: 'create',
 					table: this.table,
-					data: item as any, // We don't have the ID yet
+					data: transformedData,
 					status: 'pending'
 				}]
 			};
@@ -263,11 +289,14 @@ export class SyncEngine<T, K extends keyof T> {
 			const existing = state.data.get(id);
 			if (!existing) throw new Error('Item not found');
 
-
-			console.log(existing, updates)
 			const updated = { ...existing, ...updates };
+			const upTrans = this.options.updateTransform!
+			const transformedData = upTrans(updated);
+
 			const newData = new Map(state.data);
-			newData.set(id, updated);
+			newData.set(id, transformedData);
+
+			//transformedData.set(id, updated);
 
 			return {
 				...state,
