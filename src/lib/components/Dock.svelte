@@ -3,7 +3,7 @@
 </script>
 
 <div
-	class="dock dock-xs to-primary/10 dark:to-base-100 h-15 bg-gradient-to-b text-xs backdrop-blur-2xl"
+	class="dock dock-xs to-primary/10 dark:to-base-100 mb-7 bg-gradient-to-b pt-3 text-xs backdrop-blur-2xl"
 >
 	<a href="/app" class="btn btn-ghost">
 		<House weight="bold" />
