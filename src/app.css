@@ -8,17 +8,17 @@
 }
 
 @font-face {
-	font-family: 'Monaspace Radon';
+	font-family: 'CommitMono';
 	font-style: normal;
 	font-weight: 400;
-	src: url('/fonts/MonaspaceRadon-Regular.otf');
+	src: url('/fonts/CommitMono-Regular.otf');
 }
 
 @font-face {
-	font-family: 'Monaspace Radon';
+	font-family: 'CommitMono';
 	font-style: normal;
 	font-weight: 800;
-	src: url('/fonts/MonaspaceRadon-ExtraBold.otf');
+	src: url('/fonts/CommitMono-Bold.otf');
 }
 
 @plugin '@tailwindcss/typography';
