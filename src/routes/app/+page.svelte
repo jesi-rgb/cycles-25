@@ -5,7 +5,7 @@
 	import { onMount } from 'svelte';
 	import { syncEngine } from '../../stores/syncStore';
 	import Habit from '$lib/components/Habit.svelte';
-	import { Info, PlusCircle } from 'phosphor-svelte';
+	import { Info, PlusCircle, SignOut } from 'phosphor-svelte';
 	import type { HabitType } from '$lib/types';
 
 	const data = syncEngine.data;
@@ -42,13 +42,18 @@
 
 <main>
 	<div class="mb-8 flex items-center justify-between">
-		<div class="flex items-center gap-4">
-			<h1 class="text-3xl font-bold">Cycles</h1>
-			{#if online}
-				<div class="bg-success size-2 rounded-full"></div>
-			{:else}
-				<div class="bg-error size-2 rounded-full"></div>
-			{/if}
+		<div class="flex w-full items-center justify-between gap-4">
+			<div class="flex items-center gap-4">
+				<h1 class="text-3xl font-bold">Cycles</h1>
+				{#if online}
+					<div class="bg-success size-2 rounded-full"></div>
+				{:else}
+					<div class="bg-error size-2 rounded-full"></div>
+				{/if}
+			</div>
+			<button onclick={handleSignOut} class="btn btn-error"
+				><SignOut weight="bold" size={20} />
+			</button>
 		</div>
 		<div class="flex gap-2"></div>
 	</div>

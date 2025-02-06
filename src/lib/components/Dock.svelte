@@ -2,7 +2,9 @@
 	import { ChartBar, ChartBarHorizontal, House, Plus, PlusCircle, Wrench } from 'phosphor-svelte';
 </script>
 
-<div class="dock dock-xs to-primary/10 h-9 bg-gradient-to-r text-xs backdrop-blur-2xl">
+<div
+	class="dock dock-xs to-primary/10 dark:to-base-100 h-15 bg-gradient-to-b text-xs backdrop-blur-2xl"
+>
 	<a href="/app" class="btn btn-ghost">
 		<House weight="bold" />
 		<span class="dock-label">Home</span>
