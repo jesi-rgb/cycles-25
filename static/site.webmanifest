@@ -1,6 +1,6 @@
 {
-  "name": "cycles",
-  "short_name": "cycles",
+  "name": "MyWebSite",
+  "short_name": "MySite",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -15,7 +15,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#272322",
-  "background_color": "#272322",
+  "theme_color": "#272935",
+  "background_color": "#272935",
   "display": "standalone"
 }
