@@ -31,6 +31,10 @@
 	--subtle: color-mix(in oklab, var(--color-base-content) 20%, transparent);
 	--muted: oklch(0.60 0 none);
 
+	font-feature-settings: 'cv01', 'cv04', 'ss05';
+
+
+
 }
 
 /* Remove the media query and handle dark mode entirely through the theme system */
@@ -127,7 +131,7 @@
 
 
 @theme cycles {
-	--font-sans: Monaspace Radon;
+	--font-sans: CommitMono;
 	--font-count: Recursive;
 
 	--color-muted: var(--muted);
@@ -135,4 +139,6 @@
 
 	--color-primary-200: oklch(from var(--color-primary-content) calc(l + 0.13) calc(c + 0.01) h);
 	--color-info-200: oklch(from var(--color-info) calc(l + 0.13) calc(c + 0.01) h);
+
+
 }

@@ -31,8 +31,7 @@
 			{#if habit.current_count >= habit.target_count}
 				<div class="relative flex items-center justify-center">
 					<div
-						class="radial-progress text-accent shadow-accent/50 absolute
-						-z-1 shadow-[0_0_8px_0]"
+						class="radial-progress text-accent shadow-accent/50 absolute -z-1 shadow-[0_0_8px_0]"
 						style={`--value:${(habit.current_count / habit.target_count) * 100}; --thickness: 3px`}
 					></div>
 
