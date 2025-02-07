@@ -12,6 +12,9 @@
 	<link rel="manifest" href="/site.webmanifest" />
 	<meta name="description" content="Cycles" />
 	<title>Cycles</title>
+
+	<meta name="theme-color" content="#F8F8F8" media="(prefers-color-scheme: light)" />
+	<meta name="theme-color" content="#272322" media="(prefers-color-scheme: dark)" />
 </svelte:head>
 
 <main class="mx-auto my-10 w-[95%] max-w-5xl sm:my-20">
