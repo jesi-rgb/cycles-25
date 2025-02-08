@@ -5,7 +5,7 @@
 	import { onMount } from 'svelte';
 	import { syncEngine } from '../../stores/syncStore';
 	import Habit from '$lib/components/Habit.svelte';
-	import { Info, PlusCircle, SignOut } from 'phosphor-svelte';
+	import { Info, SignOut } from 'phosphor-svelte';
 	import type { HabitType } from '$lib/types';
 
 	const data = syncEngine.data;

@@ -100,6 +100,7 @@ export class SyncEngine<T, K extends keyof T> {
 		// Setup online/offline listeners
 		window.addEventListener('online', this.handleOnline);
 		window.addEventListener('offline', this.handleOffline);
+		window.addEventListener('visibilitychange', this.visibilitySync);
 
 		// Initial fetch of data from Supabase
 
@@ -255,6 +256,13 @@ export class SyncEngine<T, K extends keyof T> {
 	private handleOffline = () => {
 		this.store.update(state => ({ ...state, isOnline: false }));
 	};
+
+	private visibilitySync = () => {
+		const vizState = document.visibilityState;
+		if (vizState !== 'hidden') {
+			this.pull();
+		}
+	}
 
 	public async create(item: Omit<T, K>): Promise<void> {
 		const tempId = crypto.randomUUID();
